@@ -50,6 +50,9 @@
 #define LCD_5x10DOTS 0x04
 #define LCD_5x8DOTS 0x00
 
+//ws0010
+#define ENGLISH_RUSSIAN_CHARACTER 0x02
+
 /**
  * @file LiquidCrystalIO.h
  * A fork of the LiquidCrystal library to take advantage of IoAbstraction, supporting I2C IoExpanders, Shift registers
@@ -385,6 +388,8 @@ private:
 
     BasicIoAbstraction *_io_method;
     AnalogDevice* _analog_device;
+
+    int8_t utf_hi_char; // UTF-8 high part
 };
 
 /**

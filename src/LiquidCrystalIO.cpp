@@ -13,6 +13,16 @@
 #include <AnalogDeviceAbstraction.h>
 #include "LiquidCrystalIO.h"
 
+// it is a russian alphabet translation
+// except 0401 --> 0xa2 = ╗, 0451 --> 0xb5
+const char utf_recode[] PROGMEM=
+{ 
+    0x70,0x63,0xbf,0x79,0xe4,0x78,0xe5,0xc0,0xc1,0xe6,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,
+    0x41,0xa0,0x42,0xa1,0xe0,0x45,0xa3,0xa4,0xa5,0xa6,0x4b,0xa7,0x4d,0x48,0x4f,
+    0xa8,0x50,0x43,0x54,0xa9,0xaa,0x58,0xe1,0xab,0xac,0xe2,0xad,0xae,0x62,0xaf,0xb0,0xb1,
+    0x61,0xb2,0xb3,0xb4,0xe3,0x65,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0x6f,0xbe
+};
+
 // When the display powers up, it is configured as follows:
 //
 // 1. Display clear
@@ -97,9 +107,9 @@ void LiquidCrystal::init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t en
     _data_pins[7] = d7;
 
     if (fourbitmode)
-        _displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
+        _displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS | ENGLISH_RUSSIAN_CHARACTER;
     else
-        _displayfunction = LCD_8BITMODE | LCD_1LINE | LCD_5x8DOTS;
+        _displayfunction = LCD_8BITMODE | LCD_1LINE | LCD_5x8DOTS | ENGLISH_RUSSIAN_CHARACTER;
 
     // we cannot call begin from the CTOR, it is dangerous and uses pins before the
     // underlying device is fully initialised. Fails completely for i2c.
@@ -352,7 +362,27 @@ inline void LiquidCrystal::command(uint8_t value) {
 }
 
 inline size_t LiquidCrystal::write(uint8_t value) {
-    send(value, HIGH);
+    uint8_t out_char=value;
+
+  if (utf_hi_char >= 0) {
+    if (value >= 0xc0 || value < 0x80) { // it was not an UTF-8 cyrillic char
+      send(0xd0+utf_hi_char,HIGH);
+      send(out_char, HIGH); 
+    } else {
+      value &= 0x3f;
+      if (!utf_hi_char && (value == 1))
+        send(0xa2,HIGH); // Ё
+      else if ((utf_hi_char == 1) && (value == 0x11))
+	send(0xb5,HIGH); // ё
+      else
+        send(pgm_read_byte_near(utf_recode + value), HIGH);
+    }
+    utf_hi_char = -1;
+  } else if (value>=0xd0 && value<0xd2 && utf_hi_char<0) {
+    utf_hi_char = value - 0xd0;
+  } else
+    send(out_char, HIGH);
+
     return 1; // assume sucess
 }
 
