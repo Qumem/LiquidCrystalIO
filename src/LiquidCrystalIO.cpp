@@ -177,7 +177,7 @@ void LiquidCrystal::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
     // SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
     // according to datasheet, we need at least 40ms after power rises above 2.7V
     // before sending commands. Arduino can turn on way before 4.5V so we'll wait 50
-    taskManager.yieldForMicros(50000);
+    taskManager.yieldForMicros(550000); //WS0010 we need at least 500ms after power
     // Now we pull both RS and R/W low to begin commands
 
     _io_method->writeValue(_rs_pin, LOW);
@@ -194,18 +194,17 @@ void LiquidCrystal::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 
         // we start in 8bit mode, try to set 4 bit mode
         write4bits(0x03);
-        taskManager.yieldForMicros(4500); // wait min 4.1ms
-
-        // second try
-        write4bits(0x03);
-        taskManager.yieldForMicros(4500); // wait min 4.1ms
-
-        // third go!
-        write4bits(0x03);
-        taskManager.yieldForMicros(150);
+        taskManager.yieldForMicros(5000); // wait min 4.1ms
+        // if(_oled_ver == OLED_V2) {  // only run extra command for newer displays
+        //     write4bits(0x08);
+        //     delayMicroseconds(5000);
+        // }
 
         // finally, set to 4-bit interface
         write4bits(0x02);
+        taskManager.yieldForMicros(5000); // wait min 4.1ms
+        write4bits(0x02);
+        taskManager.yieldForMicros(5000); // wait min 4.1ms
     } else {
         // this is according to the hitachi HD44780 datasheet
         // page 45 figure 23
@@ -231,6 +230,7 @@ void LiquidCrystal::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 
     // clear it off
     clear();
+    home();
 
     // Initialize to default text direction (for romance languages)
     _displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
