@@ -177,8 +177,7 @@ void LiquidCrystal::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
     // SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
     // according to datasheet, we need at least 40ms after power rises above 2.7V
     // before sending commands. Arduino can turn on way before 4.5V so we'll wait 50
-    //taskManager.yieldForMicros(50000); //50000 default, 500 ms for WS0010
-    for (int i = 0; i <=31; i++) delayMicroseconds(16000);
+    taskManager.yieldForMicros(50000);
     // Now we pull both RS and R/W low to begin commands
 
     _io_method->writeValue(_rs_pin, LOW);
@@ -187,12 +186,6 @@ void LiquidCrystal::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
         _io_method->writeValue(_rw_pin, LOW);
     }
     _io_method->runLoop();
-
-    for( uint8_t i = 0; i < 5; i++ )
-    {
-        command(LCD_DISPLAYOFF);
-        taskManager.yieldForMicros(4500);  // wait more than 4.1ms
-    }
 
     //put the LCD into 4 bit or 8 bit mode
     if (!(_displayfunction & LCD_8BITMODE)) {
